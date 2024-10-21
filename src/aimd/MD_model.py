@@ -42,7 +42,7 @@ def get_water_layer(d):
 
     
 
-def water_volume(number, a):
+def water_volume(layer):
     """
     a*b*np.sqrt(3) /2 * c = total_volume
     total_volum = number_water * vol
@@ -54,19 +54,24 @@ def water_volume(number, a):
     
     n = np.sqrt(number / l)
     """
-    
+    Ru = hcp0001('Ru', (8,8,4),a=2.728355)
+    cell_a = Ru.get_cell()[0][0]
+    print(cell_a)
     vol = ((18.01528 / 6.022140857e23) / (0.9982 / 1e24))
-    total_volume = number * vol
-    c = total_volume / (a**2 * np.sqrt(3) /2 )
     water_length = ((18.01528 / 6.022140857e23) / (0.9982 / 1e24))**(1 / 3.)
+    n1 = int(cell_a/water_length)
+    n2 = n1 
+    total_volume = layer * vol * n1 * n2
+    c = total_volume / (cell_a**2 * np.sqrt(3) /2 )
+
     
-    Ga = np.array([a, 0, 0])
-    Gb = np.array([a/2, (a * np.sqrt(3))/2, 0])
+    Ga = np.array([cell_a, 0, 0])
+    Gb = np.array([cell_a/2, (cell_a * np.sqrt(3))/2, 0])
     Gc = np.array([0, 0, c])
-    n1 = 3
-    n2 = 3 
-    n3 = 3
-    assert n1*n2*n3 == number
+
+    n3 = layer
+    print(n1)
+    # assert n1*n2*n3 == number
     e1 = Ga/n1
     e2 = Gb/n2
     e3 = Gc/n3
@@ -85,18 +90,20 @@ def water_volume(number, a):
        [0, rOH * np.cos(x), -rOH * np.sin(x)]]
      
     water = molecule('H2O')
-    Ru = hcp0001('Ru', (4,4,4),a=2.728355)
+    # Ru = hcp0001('Ru', (6,6,4),a=2.728355)
+#    add_adsorbate(Ru, 'H',height=1, position='hcp')
+
     for i in position:
         
         water.rotate(np.random.randint(0,360),[np.random.randint(1,5),np.random.randint(1,5),np.random.randint(1,5)])   
         
-        add_adsorbate(Ru, water, height=i[2]+2, position = (i[0]+0.2,i[1]+0.2))
-        Ru.center(vacuum=7.5, axis=2)
-        Ru.write('test.cif')
+        add_adsorbate(Ru, water, height=i[2]+2.5, position = (i[0]+(np.random.rand()),i[1]+np.random.rand()))
+        Ru.center(vacuum=10, axis=2)
+        Ru.write('test884.cif')
     return position
 
 
-a = water_volume(27, 10.91342)
+a = water_volume(6)
 print(len(a))
 
 # x = angleHOH * np.pi / 180 / 2
