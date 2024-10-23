@@ -3,7 +3,8 @@
 """
 Created on Wed Oct 23 10:21:35 2024
 
-@author: hxps
+@author: Hongye Qin
+@email: 290720931@qq.com
 """
 
 
