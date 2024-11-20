@@ -2,10 +2,11 @@
 """
 Created on Mon Dec 26 22:40:24 2022
 
-@author: hongye
+@author: win
 """
 import numpy as np
 from ase.io.trajectory import Trajectory
+from acat.build.ordering import SymmetricClusterOrderingGenerator as SCOG
 from ase.cluster import Octahedron
 from ase.calculators.vasp import Vasp
 from ase.io import read
@@ -13,8 +14,9 @@ from ase.visualize import view
 from ase import Atoms
 import time
 
-
-from ase.db import connect
+atoms =Octahedron('Cu', 5,2)
+atoms.center(vacuum=10, axis=(0,1,2))
+atoms.set_pbc([True])
 
 # scog = SCOG(atoms, elements=['Co', 'Mn', 'Fe', 'Cu', 'Mo','Sn'],
 #             symmetry='spherical',
@@ -23,9 +25,9 @@ from ase.db import connect
 
 # images = read('orderings.traj', index=':')
 #view(atoms)
-# atoms = Atoms(atoms)
+atoms = Atoms(atoms)
 
-def get_random_hcp_alloy(num_structure, host,  **kwargs):
+def get_random_hcp_alloy(num_structure, atoms, host,  **kwargs):
     """
     generate high entropy alloy
     output type: type1 db
@@ -52,15 +54,11 @@ def get_random_hcp_alloy(num_structure, host,  **kwargs):
     png_name = str(png)
     dopant_species = len(key_dict)
 
-    db = connect('{}.db'.format(png_name))
-    traj = Trajectory('{}.traj'.format(png_name),'w')
+
+    
     for i in range(num_structure):
         
-        
         seed=1120210312+i*100
-        atoms =Octahedron(host, 5,2)
-        atoms.center(vacuum=10, axis=(0,1,2))
-        atoms.set_pbc([True])
 
         super_cell = atoms
         positions = super_cell.get_positions()
@@ -74,7 +72,7 @@ def get_random_hcp_alloy(num_structure, host,  **kwargs):
         elements = super_cell.get_chemical_symbols() #[Al, Al, Al ,etc]
         impurity = [] # dict for dopants numbers 
         np.random.seed(seed) # for repeat
-        
+        traj = Trajectory('{}-{}.traj'.format(png_name,i),'w')
         for j in range(dopant_species):
             impurity.append(np.round(atoms_num * value_dict[j]))
         for k in range(len(impurity)):    
@@ -94,7 +92,7 @@ def get_random_hcp_alloy(num_structure, host,  **kwargs):
         k0=1
         k1=1
         k2=1
-        calc = Vasp(algo='Fast',
+        calc = Vasp(algo='Normal',
                             xc='PBE',
                             encut=500,
                             ediff=0.00001,
@@ -103,9 +101,6 @@ def get_random_hcp_alloy(num_structure, host,  **kwargs):
                             nsw=300,
                             ibrion=2,
                             lreal='Auto',
-                            ivdw=11,
-                            ldipol=True,
-                            idipol=4,
                             ispin=1,
                             lwave=False,
                             lcharg=False,
@@ -113,7 +108,6 @@ def get_random_hcp_alloy(num_structure, host,  **kwargs):
                             directory='.')
         super_cell.calc = calc
         super_cell.get_potential_energy()
-        db.write(super_cell)
         traj.write(super_cell)
         time.sleep(30)
                 
@@ -126,7 +120,7 @@ def get_random_hcp_alloy(num_structure, host,  **kwargs):
 # print(atoms.cell)
 # a = Atoms(atoms)   
 # print(a.get_positions())
-a = get_random_hcp_alloy(50,  'Cu', Sn=0.166, Cu=0.166, Mn=0.166,Mo=0.166,Fe=0.166, Co=0.17) # run with this command
+a = get_random_hcp_alloy(1, atoms, 'Cu', Sn=0.166, Cu=0.166, Mn=0.166,Mo=0.166,Fe=0.166, Co=0.17) # run with this command
 
 # print(a)
 #get_random_hcp_alloy(2,'Ru', 2, 0.05, Ru=0.5, Fe=0.5)
